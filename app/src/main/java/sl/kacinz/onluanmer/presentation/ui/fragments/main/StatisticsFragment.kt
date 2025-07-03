@@ -289,7 +289,6 @@ class StatisticsFragment : Fragment() {
             }
 
             axisLeft.apply {
-                val step = 100f
                 val maxY = dataSet.yMax
                 val step = computeAxisStep(maxY)
                 val top = ceil(maxY / step) * step
