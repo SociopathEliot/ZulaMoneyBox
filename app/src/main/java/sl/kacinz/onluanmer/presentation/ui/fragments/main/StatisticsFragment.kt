@@ -34,7 +34,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
@@ -291,7 +290,8 @@ class StatisticsFragment : Fragment() {
             axisLeft.apply {
                 val maxY = dataSet.yMax
                 val step = computeAxisStep(maxY)
-                val top = ceil(maxY / step) * step
+                val top = ((maxY / step).toInt() + 1) * step
+
                 setAxisMinimum(0f)
                 setAxisMaximum(top)
                 setLabelCount((top / step).toInt() + 1, true)
