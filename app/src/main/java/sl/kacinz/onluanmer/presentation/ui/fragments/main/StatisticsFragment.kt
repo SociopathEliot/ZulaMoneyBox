@@ -291,7 +291,6 @@ class StatisticsFragment : Fragment() {
                 val maxY = dataSet.yMax
                 val step = computeAxisStep(maxY)
                 val top = ((maxY / step).toInt() + 1) * step
-
                 setAxisMinimum(0f)
                 setAxisMaximum(top)
                 setLabelCount((top / step).toInt() + 1, true)

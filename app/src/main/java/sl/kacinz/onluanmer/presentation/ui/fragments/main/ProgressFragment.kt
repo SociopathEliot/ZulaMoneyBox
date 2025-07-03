@@ -29,6 +29,10 @@ import sl.kacinz.onluanmer.domain.model.SampleData
 import sl.kacinz.onluanmer.domain.model.Transaction
 import sl.kacinz.onluanmer.presentation.ui.fragments.viewmodels.ProgressViewModel
 import sl.kacinz.onluanmer.utils.TimeRange
+import sl.kacinz.onluanmer.utils.toKString
+import kotlin.math.floor
+import kotlin.math.log10
+import kotlin.math.pow
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -219,10 +223,15 @@ class ProgressFragment : Fragment() {
 
             axisLeft.apply {
                 val maxY = dataSet.yMax
-                val top = ((maxY / step).toInt() + 1) * step
+                val axisStep = computeAxisStep(maxY)
+                val top = ((maxY / axisStep).toInt() + 1) * axisStep
                 setAxisMinimum(0f)
                 setAxisMaximum(top)
-                setLabelCount((top / step).toInt() + 1, true)
+                setLabelCount((top / axisStep).toInt() + 1, true)
+                granularity = axisStep
+                valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
+                    override fun getFormattedValue(value: Float): String = value.toKString()
+                }
                 textSize = 12f
                 textColor = Color.WHITE
                 setDrawAxisLine(false)
@@ -237,6 +246,19 @@ class ProgressFragment : Fragment() {
         }
     }
 
+    private fun computeAxisStep(maxValue: Float): Float {
+        if (maxValue <= 0f) return 1f
+        val raw = maxValue / 5f
+        val magnitude = 10f.pow(floor(log10(raw)))
+        val residual = raw / magnitude
+        val step = when {
+            residual <= 1f -> 1f
+            residual <= 2f -> 2f
+            residual <= 5f -> 5f
+            else -> 10f
+        }
+        return step * magnitude
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
