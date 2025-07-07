@@ -25,7 +25,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import sl.kacinz.onluanmer.R
 import sl.kacinz.onluanmer.databinding.FragmentProgressBinding
-import sl.kacinz.onluanmer.domain.model.SampleData
 import sl.kacinz.onluanmer.domain.model.Transaction
 import sl.kacinz.onluanmer.presentation.ui.fragments.viewmodels.ProgressViewModel
 import sl.kacinz.onluanmer.utils.TimeRange
@@ -75,14 +74,9 @@ class ProgressFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                if (args.goal.id == SampleData.sampleGoal.id) {
-                    allTransactions = SampleData.sampleTransactions
+                viewModel.transactions(args.goal.id).collect { list ->
+                    allTransactions = list
                     updateForRange()
-                } else {
-                    viewModel.transactions(args.goal.id).collect { list ->
-                        allTransactions = list
-                        updateForRange()
-                    }
                 }
             }
         }

@@ -16,7 +16,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
-import sl.kacinz.onluanmer.domain.model.SampleData
 import kotlinx.coroutines.launch
 import sl.kacinz.onluanmer.R
 import sl.kacinz.onluanmer.databinding.FragmentGoalDetailBinding
@@ -70,18 +69,12 @@ class GoalDetailFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                if (args.goal.id == SampleData.sampleGoal.id) {
-                    transactions = SampleData.sampleTransactions
-                    showingAll = false
-                    updateList()
-                } else {
-                    viewModel.transactions(args.goal.id)
-                        .collectLatest { list ->
-                            transactions = list
-                            showingAll = false
-                            updateList()
-                        }
-                }
+                viewModel.transactions(args.goal.id)
+                    .collectLatest { list ->
+                        transactions = list
+                        showingAll = false
+                        updateList()
+                    }
             }
         }
 

@@ -10,7 +10,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
-import sl.kacinz.onluanmer.domain.model.SampleData
 import sl.kacinz.onluanmer.R
 import sl.kacinz.onluanmer.databinding.FragmentGoalListBinding
 import sl.kacinz.onluanmer.domain.model.Goal
@@ -42,8 +41,7 @@ class GoalListFragment : Fragment() {
         }
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.goals.collectLatest { goals ->
-                val updated = goals + SampleData.sampleGoal
-                adapter.submitList(updated)
+                adapter.submitList(goals)
             }
         }
     }
