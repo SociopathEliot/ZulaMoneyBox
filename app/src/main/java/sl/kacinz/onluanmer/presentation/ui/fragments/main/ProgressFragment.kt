@@ -90,7 +90,7 @@ class ProgressFragment : Fragment() {
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    findNavController().navigateUp()
+                    findNavController().navigate(R.id.goalListFragment)
                 }
             })
     }

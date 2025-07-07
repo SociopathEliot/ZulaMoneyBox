@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.fragment.app.viewModels
@@ -119,7 +120,11 @@ class GoalDetailFragment : Fragment() {
         listOf(binding.ivBack, binding.btnBack).forEach { view ->
             view.setOnClickListener { findNavController().popBackStack() }
         }
-
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                findNavController().navigate(R.id.goalListFragment)
+            }
+        })
     }
 
     private fun updateList() {

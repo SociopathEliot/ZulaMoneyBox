@@ -8,11 +8,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
+import sl.kacinz.onluanmer.R
 import sl.kacinz.onluanmer.databinding.FragmentCreateGoalBinding
 import sl.kacinz.onluanmer.domain.model.Goal
 import sl.kacinz.onluanmer.presentation.ui.fragments.viewmodels.CreateGoalViewModel
@@ -69,6 +71,12 @@ class CreateGoalFragment : Fragment() {
         binding.imagePicker.setOnClickListener { imagePickerLauncher.launch("image/*") }
         binding.btnGetStarted.setOnClickListener { saveGoal() }
         binding.btnDelete.setOnClickListener { removeImage() }
+
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                findNavController().navigate(R.id.goalListFragment)
+            }
+        })
     }
 
     private fun openDatePicker() {

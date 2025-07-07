@@ -45,6 +45,8 @@
                 android:layout_marginTop="24dp"
                 android:fontFamily="@font/micross"
                 android:layout_marginHorizontal="20dp"
+                android:singleLine="true"
+                android:maxLines="1"
                 android:background="@drawable/bg_input_field"
                 android:hint="Goal Name"
                 android:padding="12dp"
