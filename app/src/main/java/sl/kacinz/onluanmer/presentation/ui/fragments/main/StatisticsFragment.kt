@@ -198,25 +198,25 @@ class StatisticsFragment : Fragment() {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val labelFmt = DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH)
 
-        val nowMonth = YearMonth.now()
-        val startMonth = nowMonth.minusMonths(6)
-        val endForLabel = nowMonth.plusMonths(1)
-
-        val months = generateSequence(startMonth) { it.plusMonths(1) }
-            .takeWhile { !it.isAfter(endForLabel) }
-            .toList()
-
-        val sumsByMonth = transactions.groupBy { YearMonth.from(LocalDate.parse(it.date, parseFmt)) }
-            .mapValues { entry -> entry.value.sumOf { it.amount }.toFloat() }
+        val grouped = transactions
+            .groupBy { YearMonth.from(LocalDate.parse(it.date, parseFmt)) }
+            .toSortedMap()
+        if (grouped.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
 
         val step = 100f
-        val entries = months.dropLast(1).mapIndexed { idx, ym ->
-            val raw = sumsByMonth[ym] ?: 0f
+        val entries = grouped.values.mapIndexed { idx, list ->
+            val raw = list.sumOf { it.amount }.toFloat()
             val snapped = (raw / step).toInt() * step
             Entry(idx + 1f, snapped)
         }
 
-        val labels = listOf("") + months.map { it.atDay(1).format(labelFmt) }
+        val lastMonth = grouped.keys.last()
+        val labels = listOf("") +
+            grouped.keys.map { it.atDay(1).format(labelFmt) } +
+            listOf(lastMonth.plusMonths(1).atDay(1).format(labelFmt))
         applyChart(entries, labels)
     }
 
