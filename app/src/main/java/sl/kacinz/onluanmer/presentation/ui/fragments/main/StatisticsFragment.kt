@@ -121,14 +121,16 @@ class StatisticsFragment : Fragment() {
         range: TimeRange,
     ): List<Transaction> {
         return when (range) {
-            TimeRange.LAST_WEEK -> {
-                val start = LocalDate.now().minusDays(6)
+            TimeRange.ALL_TIME -> transactions
+            else -> {
+                val days = range.days ?: return transactions
+                val start = LocalDate.now().minusDays(days - 1)
+
                 transactions.filter { txn ->
                     val date = LocalDate.parse(txn.date, formatter)
                     !date.isBefore(start)
                 }
             }
-            else -> transactions
         }
     }
 
@@ -158,9 +160,9 @@ class StatisticsFragment : Fragment() {
     private fun updateChart(transactions: List<Transaction>) {
         when (ranges[rangeIndex]) {
             TimeRange.LAST_WEEK -> drawDaily(transactions)
-            TimeRange.LAST_MONTH, TimeRange.LAST_YEAR -> drawMonthly(transactions)
+            TimeRange.LAST_MONTH -> drawMonthly(transactions)
+            TimeRange.LAST_YEAR -> drawYearly(transactions)
             TimeRange.ALL_TIME -> drawYearly(transactions)
-
         }
     }
 
@@ -219,8 +221,12 @@ class StatisticsFragment : Fragment() {
     private fun drawYearly(transactions: List<Transaction>) {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
-        val nowYear = LocalDate.now().year
-        val startYear = nowYear - 9
+        val parsedDates = transactions.map { LocalDate.parse(it.date, parseFmt) }
+        if (parsedDates.isEmpty()) return
+
+        val startYear = parsedDates.minOrNull()!!.year
+        val endYear = parsedDates.maxOrNull()!!.year
+
 
         val years = (startYear..nowYear + 1).toList()
 
