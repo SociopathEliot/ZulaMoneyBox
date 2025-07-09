@@ -120,11 +120,16 @@ class StatisticsFragment : Fragment() {
         transactions: List<Transaction>,
         range: TimeRange,
     ): List<Transaction> {
-        if (range.days == null) return transactions
-        val cutoff = LocalDate.now().minusDays(range.days)
-        return transactions.filter {
-            val date = LocalDate.parse(it.date, formatter)
-            !date.isBefore(cutoff)
+        return when (range) {
+            TimeRange.ALL_TIME -> transactions
+            else -> {
+                val days = range.days ?: return transactions
+                val start = LocalDate.now().minusDays(days - 1)
+                transactions.filter { txn ->
+                    val date = LocalDate.parse(txn.date, formatter)
+                    !date.isBefore(start)
+                }
+            }
         }
     }
 
@@ -154,9 +159,9 @@ class StatisticsFragment : Fragment() {
     private fun updateChart(transactions: List<Transaction>) {
         when (ranges[rangeIndex]) {
             TimeRange.LAST_WEEK -> drawDaily(transactions)
-            TimeRange.LAST_MONTH, TimeRange.LAST_YEAR -> drawMonthly(transactions)
+            TimeRange.LAST_MONTH -> drawMonthly(transactions)
+            TimeRange.LAST_YEAR -> drawYearly(transactions)
             TimeRange.ALL_TIME -> drawYearly(transactions)
-
         }
     }
 
@@ -164,22 +169,20 @@ class StatisticsFragment : Fragment() {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val labelFmt = DateTimeFormatter.ofPattern("dd.MM")
 
-        val parsedDates = transactions.map { LocalDate.parse(it.date, parseFmt) }.sorted()
-        if (parsedDates.isEmpty()) return
-
-        val startDate = parsedDates.first()
-        val lastDate = parsedDates.last()
-        val endForLabel = lastDate.plusDays(1)
+        val today = LocalDate.now()
+        val startDate = today.minusDays(6)
+        val endForLabel = today.plusDays(1)
 
         val allDates = generateSequence(startDate) { it.plusDays(1) }
             .takeWhile { !it.isAfter(endForLabel) }
             .toList()
 
-        val txByDate = transactions.associateBy { LocalDate.parse(it.date, parseFmt) }
+        val sumsByDate = transactions.groupBy { LocalDate.parse(it.date, parseFmt) }
+            .mapValues { entry -> entry.value.sumOf { it.amount }.toFloat() }
 
         val step = 100f
         val entries = allDates.dropLast(1).mapIndexed { idx, date ->
-            val raw = txByDate[date]?.amount?.toFloat() ?: 0f
+            val raw = sumsByDate[date] ?: 0f
             val snapped = (raw / step).toInt() * step
             Entry(idx + 1f, snapped)
         }
@@ -222,7 +225,6 @@ class StatisticsFragment : Fragment() {
 
         val parsedDates = transactions.map { LocalDate.parse(it.date, parseFmt) }
         if (parsedDates.isEmpty()) return
-
 
         val startYear = parsedDates.minOrNull()!!.year
         val endYear = parsedDates.maxOrNull()!!.year
