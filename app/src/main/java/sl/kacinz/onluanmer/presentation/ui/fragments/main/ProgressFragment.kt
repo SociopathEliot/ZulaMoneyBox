@@ -150,6 +150,7 @@ class ProgressFragment : Fragment() {
             grouped.keys.map { it.format(labelFmt) } +
             listOf(lastDate.plusDays(1).format(labelFmt))
 
+
         // 8. DataSet styling (unchanged)
         val dataSet = LineDataSet(entries, "").apply {
             mode = LineDataSet.Mode.LINEAR
