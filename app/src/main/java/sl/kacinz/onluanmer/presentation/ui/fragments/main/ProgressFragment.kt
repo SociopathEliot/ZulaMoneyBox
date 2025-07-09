@@ -127,37 +127,28 @@ class ProgressFragment : Fragment() {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val labelFmt = DateTimeFormatter.ofPattern("dd.MM")
 
-        // 2. Parse & sort
-        val parsedDates = transactions
-            .map { LocalDate.parse(it.date, parseFmt) }
-            .sorted()
-        if (parsedDates.isEmpty()) return
+        // Group by date and sort to remove long gaps when there are only a few
+        // transactions. Using only existing dates for the x‑axis keeps the graph
+        // compact and easier to read.
+        val grouped = transactions
+            .groupBy { LocalDate.parse(it.date, parseFmt) }
+            .toSortedMap()
+        if (grouped.isEmpty()) return
 
-        // 3. Range +1 day
-        val startDate = parsedDates.first()
-        val lastDate = parsedDates.last()
-        val endForLabel = lastDate.plusDays(1)
-
-        // 4. Build full date list
-        val allDates = generateSequence(startDate) { it.plusDays(1) }
-            .takeWhile { !it.isAfter(endForLabel) }
-            .toList()
-
-        // 5. Quick lookup
-        val txByDate = transactions.associateBy { LocalDate.parse(it.date, parseFmt) }
-
-        // 6. Snap y to nearest lower 100, shift right by 1 cell for that left‐gap
+        // Snap values to the nearest lower 100 and shift the graph to the right
+        // by one index so the first point isn't flush against the y‑axis.
         val step = 100f
-        val entries = allDates
-            .dropLast(1)
-            .mapIndexed { idx, date ->
-                val raw = txByDate[date]?.amount?.toFloat() ?: 0f
-                val snapped = (raw / step).toInt() * step
-                Entry(idx + 1f, snapped)
-            }
+        val entries = grouped.values.mapIndexed { idx, list ->
+            val raw = list.sumOf { it.amount }.toFloat()
+            val snapped = (raw / step).toInt() * step
+            Entry(idx + 1f, snapped)
+        }
 
-        // 7. Labels with that extra day on the right
-        val labels = listOf("") + allDates.map { it.format(labelFmt) }
+        // Labels correspond only to actual transaction dates
+        val lastDate = grouped.keys.last()
+        val labels = listOf("") +
+            grouped.keys.map { it.format(labelFmt) } +
+            listOf(lastDate.plusDays(1).format(labelFmt))
 
         // 8. DataSet styling (unchanged)
         val dataSet = LineDataSet(entries, "").apply {
