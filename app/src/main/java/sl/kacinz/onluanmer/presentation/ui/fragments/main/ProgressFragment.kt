@@ -33,6 +33,8 @@ import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.pow
 import java.time.LocalDate
+import java.time.YearMonth
+import java.util.Locale
 import java.time.format.DateTimeFormatter
 
 @AndroidEntryPoint
@@ -123,20 +125,30 @@ class ProgressFragment : Fragment() {
     }
 
     private fun updateChart(transactions: List<Transaction>) {
-        // 1. Two formatters
+        if (transactions.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
+        when (ranges[rangeIndex]) {
+            TimeRange.LAST_WEEK -> drawDaily(transactions)
+            TimeRange.LAST_MONTH -> drawMonthly(transactions)
+            TimeRange.LAST_YEAR -> drawYearly(transactions)
+            TimeRange.ALL_TIME -> drawYearly(transactions)
+        }
+    }
+
+    private fun drawDaily(transactions: List<Transaction>) {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val labelFmt = DateTimeFormatter.ofPattern("dd.MM")
 
-        // Group by date and sort to remove long gaps when there are only a few
-        // transactions. Using only existing dates for the x‑axis keeps the graph
-        // compact and easier to read.
         val grouped = transactions
             .groupBy { LocalDate.parse(it.date, parseFmt) }
             .toSortedMap()
-        if (grouped.isEmpty()) return
+        if (grouped.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
 
-        // Snap values to the nearest lower 100 and shift the graph to the right
-        // by one index so the first point isn't flush against the y‑axis.
         val step = 100f
         val entries = grouped.values.mapIndexed { idx, list ->
             val raw = list.sumOf { it.amount }.toFloat()
@@ -144,14 +156,65 @@ class ProgressFragment : Fragment() {
             Entry(idx + 1f, snapped)
         }
 
-        // Labels correspond only to actual transaction dates
         val lastDate = grouped.keys.last()
         val labels = listOf("") +
             grouped.keys.map { it.format(labelFmt) } +
             listOf(lastDate.plusDays(1).format(labelFmt))
+        applyChart(entries, labels)
+    }
 
+    private fun drawMonthly(transactions: List<Transaction>) {
+        val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+        val labelFmt = DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH)
 
-        // 8. DataSet styling (unchanged)
+        val grouped = transactions
+            .groupBy { YearMonth.from(LocalDate.parse(it.date, parseFmt)) }
+            .toSortedMap()
+        if (grouped.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
+
+        val step = 100f
+        val entries = grouped.values.mapIndexed { idx, list ->
+            val raw = list.sumOf { it.amount }.toFloat()
+            val snapped = (raw / step).toInt() * step
+            Entry(idx + 1f, snapped)
+        }
+
+        val lastMonth = grouped.keys.last()
+        val labels = listOf("") +
+            grouped.keys.map { it.atDay(1).format(labelFmt) } +
+            listOf(lastMonth.plusMonths(1).atDay(1).format(labelFmt))
+        applyChart(entries, labels)
+    }
+
+    private fun drawYearly(transactions: List<Transaction>) {
+        val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+
+        val grouped = transactions
+            .groupBy { LocalDate.parse(it.date, parseFmt).year }
+            .toSortedMap()
+        if (grouped.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
+
+        val step = 100f
+        val entries = grouped.values.mapIndexed { idx, list ->
+            val raw = list.sumOf { it.amount }.toFloat()
+            val snapped = (raw / step).toInt() * step
+            Entry(idx + 1f, snapped)
+        }
+
+        val lastYear = grouped.keys.last()
+        val labels = listOf("") +
+            grouped.keys.map { it.toString() } +
+            listOf((lastYear + 1).toString())
+        applyChart(entries, labels)
+    }
+
+    private fun applyChart(entries: List<Entry>, labels: List<String>) {
         val dataSet = LineDataSet(entries, "").apply {
             mode = LineDataSet.Mode.LINEAR
             setDrawValues(false)
@@ -164,13 +227,9 @@ class ProgressFragment : Fragment() {
             circleHoleColor = Color.parseColor("#0D1B3D")
             setDrawCircleHole(true)
             setDrawFilled(true)
-            fillDrawable = ContextCompat.getDrawable(
-                requireContext(),
-                R.drawable.gradient_chart_fill
-            )
+            fillDrawable = ContextCompat.getDrawable(requireContext(), R.drawable.gradient_chart_fill)
         }
 
-        // 9. Chart setup (unchanged)
         binding.lineChart.apply {
             data = LineData(dataSet)
             setBackgroundColor(Color.parseColor("#0D1B3D"))
@@ -178,17 +237,9 @@ class ProgressFragment : Fragment() {
             setTouchEnabled(false)
             axisRight.isEnabled = false
             legend.isEnabled = false
-// dp → px helper
+
             val dp = resources.displayMetrics.density
-
-// inset: left 8dp, top 0, right 24dp, bottom 16dp
-            setExtraOffsets(
-                0f * dp,
-                0f,
-                0f * dp,
-                0f * dp
-            )
-
+            setExtraOffsets(0f * dp, 0f, 0f * dp, 0f * dp)
 
             xAxis.apply {
                 position = XAxis.XAxisPosition.BOTTOM
@@ -209,15 +260,16 @@ class ProgressFragment : Fragment() {
 
             axisLeft.apply {
                 val maxY = dataSet.yMax
-                val axisStep = computeAxisStep(maxY)
-                val top = ((maxY / axisStep).toInt() + 1) * axisStep
+                val step = computeAxisStep(maxY)
+                val top = ((maxY / step).toInt() + 1) * step
                 setAxisMinimum(0f)
                 setAxisMaximum(top)
-                setLabelCount((top / axisStep).toInt() + 1, true)
-                granularity = axisStep
+                setLabelCount((top / step).toInt() + 1, true)
+                granularity = step
                 valueFormatter = object : com.github.mikephil.charting.formatter.ValueFormatter() {
                     override fun getFormattedValue(value: Float): String = value.toKString()
                 }
+
                 textSize = 12f
                 textColor = Color.WHITE
                 setDrawAxisLine(false)
