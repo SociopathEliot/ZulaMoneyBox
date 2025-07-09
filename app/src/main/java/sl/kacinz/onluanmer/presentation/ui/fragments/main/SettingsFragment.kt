@@ -1,30 +1,18 @@
 package sl.kacinz.onluanmer.presentation.ui.fragments.main
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Intent
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Typeface
-import android.content.res.ColorStateList
 import android.os.Bundle
-import android.util.TypedValue
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 import sl.kacinz.onluanmer.R
 import sl.kacinz.onluanmer.databinding.FragmentSettingsBinding
 import sl.kacinz.onluanmer.presentation.ui.fragments.legal.PrivacyPolicyFragment
@@ -65,15 +53,6 @@ class SettingsFragment : Fragment() {
             showConfirmResetDialog()
         }
 
-        binding.llSelectCurrency.setOnClickListener {
-            showSelectCurrencyDialog()
-        }
-
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewModel.currency.collectLatest { cur ->
-                cur?.let { binding.tvCurrentCurrency.text = it }
-            }
-        }
 
         binding.btnPrivacy.setOnClickListener {
             parentFragmentManager.launchNewFragmentWithoutBackstackForFragmentContainer(
@@ -114,41 +93,6 @@ class SettingsFragment : Fragment() {
             putExtra(Intent.EXTRA_TEXT, shareText)
         }
         startActivity(Intent.createChooser(intent, "Share via"))
-    }
-
-
-    @SuppressLint("SoonBlockedPrivateApi")
-    private fun showSelectCurrencyDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_select_currency, null, false)
-
-        val currencies = arrayOf("CNY", "CAD", "AUD", "USD", "EUR", "GBP", "JPY")
-        val np = dialogView.findViewById<NumberPicker>(R.id.np_currencies)
-
-        np.minValue = 0
-        np.maxValue = currencies.size - 1
-        np.displayedValues = currencies
-        np.wrapSelectorWheel = false
-        np.descendantFocusability = NumberPicker.FOCUS_BLOCK_DESCENDANTS
-
-        val current = binding.tvCurrentCurrency.text.toString()
-        val idx = currencies.indexOf(current).takeIf { it >= 0 } ?: 0
-        np.value = idx
-
-        val bottomSheetDialog = BottomSheetDialog(requireContext(), R.style.BottomSheetDialogTheme)
-        bottomSheetDialog.setContentView(dialogView)
-        bottomSheetDialog.setCanceledOnTouchOutside(true)
-        bottomSheetDialog.show()
-
-        dialogView.findViewById<ImageView>(R.id.iv_close).setOnClickListener {
-            bottomSheetDialog.dismiss()
-        }
-
-        dialogView.findViewById<MaterialButton>(R.id.btn_ok).setOnClickListener {
-            val selected = currencies[np.value]
-            binding.tvCurrentCurrency.text = selected
-            viewModel.setCurrency(selected)
-            bottomSheetDialog.dismiss()
-        }
     }
 
 
