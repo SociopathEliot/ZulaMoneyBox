@@ -33,4 +33,11 @@ object Constants {
             commit()
         }
     }
+    fun FragmentManager.launchNewFragmentWithoutBackstackForFragmentContainer(fragment: Fragment) {
+        this.beginTransaction().apply {
+            replace(R.id.fragment_container_view, fragment)
+            commit()
+        }
+    }
+
 }

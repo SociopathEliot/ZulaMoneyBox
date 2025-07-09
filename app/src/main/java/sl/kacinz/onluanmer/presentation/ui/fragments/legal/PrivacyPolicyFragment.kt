@@ -38,6 +38,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import sl.kacinz.onluanmer.R
 import sl.kacinz.onluanmer.databinding.FragmentPrivacyPolicyBinding
 import sl.kacinz.onluanmer.databinding.NoInternetConnectionLayoutBinding
 import sl.kacinz.onluanmer.presentation.ui.fragments.main.HomeFragment
@@ -62,7 +63,7 @@ class PrivacyPolicyFragment(private val urlOffer: String) : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
-
+        requireActivity().findViewById<View>(R.id.customBottomNav)?.visibility = View.GONE
         setupWebView()
         handleInitPrivacy()
         setupDownloadListener()
@@ -414,4 +415,9 @@ class PrivacyPolicyFragment(private val urlOffer: String) : Fragment() {
             }
         }
     }
+    override fun onDestroyView() {
+        super.onDestroyView()
+        requireActivity().findViewById<View>(R.id.customBottomNav)?.visibility = View.VISIBLE
+    }
+
 }

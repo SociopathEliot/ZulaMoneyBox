@@ -277,11 +277,12 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnBack"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="70dp"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="16dp"
             android:backgroundTint="#FEDD32"
             android:text="BACK"
+            android:fontFamily="@font/micross"
             android:layout_marginHorizontal="20dp"
             android:textColor="#001443"
             android:textSize="18sp"

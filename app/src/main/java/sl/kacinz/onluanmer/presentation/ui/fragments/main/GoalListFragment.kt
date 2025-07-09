@@ -42,6 +42,7 @@ class GoalListFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.goals.collectLatest { goals ->
                 adapter.submitList(goals)
+                binding.tvEmptyState.visibility = if (goals.isEmpty()) View.VISIBLE else View.GONE
             }
         }
     }

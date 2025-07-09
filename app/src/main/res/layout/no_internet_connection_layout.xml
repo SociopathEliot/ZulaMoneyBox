@@ -5,17 +5,17 @@
     tools:showIn="@layout/fragment_privacy_policy">
 
     <FrameLayout
+        android:id="@+id/root_no_internet_connection_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/bg_gradient"
-        android:elevation="1dp">
+        android:elevation="1dp"
+        android:visibility="gone">
 
         <FrameLayout
-            android:id="@+id/root_no_internet_connection_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/bg_money"
-            android:visibility="">
+            android:background="@drawable/bg_money">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="wrap_content"

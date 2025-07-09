@@ -56,10 +56,23 @@ class AddTransactionFragment : Fragment() {
             Toast.makeText(requireContext(), "Enter amount", Toast.LENGTH_SHORT).show()
             return
         }
+
         val comment = binding.etComment.text.toString()
         val goal = args.goal
         val isDeposit = args.isDeposit
+
         val newAmount = if (isDeposit) goal.currentAmount + amount else goal.currentAmount - amount
+
+        // 🔍 Проверка: превышает ли целевую сумму
+        if (isDeposit && newAmount > goal.targetAmount) {
+            Toast.makeText(
+                requireContext(),
+                "Amount exceeds goal target of ${goal.targetAmount}",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
         val updatedGoal = goal.copy(currentAmount = newAmount)
         val transaction = Transaction(
             goalId = goal.id,
@@ -67,6 +80,7 @@ class AddTransactionFragment : Fragment() {
             comment = comment,
             date = binding.tvDate.text.toString()
         )
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.saveTransaction(transaction, updatedGoal)
             findNavController().previousBackStackEntry?.savedStateHandle?.set(
@@ -76,6 +90,7 @@ class AddTransactionFragment : Fragment() {
             findNavController().popBackStack()
         }
     }
+
 
     override fun onDestroyView() {
         super.onDestroyView()
