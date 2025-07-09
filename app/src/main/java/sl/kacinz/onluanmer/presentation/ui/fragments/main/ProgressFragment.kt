@@ -145,7 +145,11 @@ class ProgressFragment : Fragment() {
         }
 
         // Labels correspond only to actual transaction dates
-        val labels = listOf("") + grouped.keys.map { it.format(labelFmt) }
+        val lastDate = grouped.keys.last()
+        val labels = listOf("") +
+            grouped.keys.map { it.format(labelFmt) } +
+            listOf(lastDate.plusDays(1).format(labelFmt))
+
 
         // 8. DataSet styling (unchanged)
         val dataSet = LineDataSet(entries, "").apply {
