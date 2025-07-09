@@ -172,25 +172,25 @@ class StatisticsFragment : Fragment() {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val labelFmt = DateTimeFormatter.ofPattern("dd.MM")
 
-        val today = LocalDate.now()
-        val startDate = today.minusDays(6)
-        val endForLabel = today.plusDays(1)
-
-        val allDates = generateSequence(startDate) { it.plusDays(1) }
-            .takeWhile { !it.isAfter(endForLabel) }
-            .toList()
-
-        val sumsByDate = transactions.groupBy { LocalDate.parse(it.date, parseFmt) }
-            .mapValues { entry -> entry.value.sumOf { it.amount }.toFloat() }
+        val grouped = transactions
+            .groupBy { LocalDate.parse(it.date, parseFmt) }
+            .toSortedMap()
+        if (grouped.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
 
         val step = 100f
-        val entries = allDates.dropLast(1).mapIndexed { idx, date ->
-            val raw = sumsByDate[date] ?: 0f
+        val entries = grouped.values.mapIndexed { idx, list ->
+            val raw = list.sumOf { it.amount }.toFloat()
             val snapped = (raw / step).toInt() * step
             Entry(idx + 1f, snapped)
         }
 
-        val labels = listOf("") + allDates.map { it.format(labelFmt) }
+        val lastDate = grouped.keys.last()
+        val labels = listOf("") +
+            grouped.keys.map { it.format(labelFmt) } +
+            listOf(lastDate.plusDays(1).format(labelFmt))
         applyChart(entries, labels)
     }
 
@@ -223,25 +223,25 @@ class StatisticsFragment : Fragment() {
     private fun drawYearly(transactions: List<Transaction>) {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
-        val parsedDates = transactions.map { LocalDate.parse(it.date, parseFmt) }
-        if (parsedDates.isEmpty()) return
-
-        val startYear = parsedDates.minOrNull()!!.year
-        val endYear = parsedDates.maxOrNull()!!.year
-
-        val years = (startYear..endYear + 1).toList()
-
-        val sumsByYear = transactions.groupBy { LocalDate.parse(it.date, parseFmt).year }
-            .mapValues { entry -> entry.value.sumOf { it.amount }.toFloat() }
+        val grouped = transactions
+            .groupBy { LocalDate.parse(it.date, parseFmt).year }
+            .toSortedMap()
+        if (grouped.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
 
         val step = 100f
-        val entries = years.dropLast(1).mapIndexed { idx, year ->
-            val raw = sumsByYear[year] ?: 0f
+        val entries = grouped.values.mapIndexed { idx, list ->
+            val raw = list.sumOf { it.amount }.toFloat()
             val snapped = (raw / step).toInt() * step
             Entry(idx + 1f, snapped)
         }
 
-        val labels = listOf("") + years.map { it.toString() }
+        val lastYear = grouped.keys.last()
+        val labels = listOf("") +
+            grouped.keys.map { it.toString() } +
+            listOf((lastYear + 1).toString())
         applyChart(entries, labels)
     }
 
