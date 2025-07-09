@@ -120,11 +120,15 @@ class StatisticsFragment : Fragment() {
         transactions: List<Transaction>,
         range: TimeRange,
     ): List<Transaction> {
-        if (range.days == null) return transactions
-        val cutoff = LocalDate.now().minusDays(range.days)
-        return transactions.filter {
-            val date = LocalDate.parse(it.date, formatter)
-            !date.isBefore(cutoff)
+        return when (range) {
+            TimeRange.LAST_WEEK -> {
+                val start = LocalDate.now().minusDays(6)
+                transactions.filter { txn ->
+                    val date = LocalDate.parse(txn.date, formatter)
+                    !date.isBefore(start)
+                }
+            }
+            else -> transactions
         }
     }
 
@@ -164,22 +168,20 @@ class StatisticsFragment : Fragment() {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val labelFmt = DateTimeFormatter.ofPattern("dd.MM")
 
-        val parsedDates = transactions.map { LocalDate.parse(it.date, parseFmt) }.sorted()
-        if (parsedDates.isEmpty()) return
-
-        val startDate = parsedDates.first()
-        val lastDate = parsedDates.last()
-        val endForLabel = lastDate.plusDays(1)
+        val today = LocalDate.now()
+        val startDate = today.minusDays(6)
+        val endForLabel = today.plusDays(1)
 
         val allDates = generateSequence(startDate) { it.plusDays(1) }
             .takeWhile { !it.isAfter(endForLabel) }
             .toList()
 
-        val txByDate = transactions.associateBy { LocalDate.parse(it.date, parseFmt) }
+        val sumsByDate = transactions.groupBy { LocalDate.parse(it.date, parseFmt) }
+            .mapValues { entry -> entry.value.sumOf { it.amount }.toFloat() }
 
         val step = 100f
         val entries = allDates.dropLast(1).mapIndexed { idx, date ->
-            val raw = txByDate[date]?.amount?.toFloat() ?: 0f
+            val raw = sumsByDate[date] ?: 0f
             val snapped = (raw / step).toInt() * step
             Entry(idx + 1f, snapped)
         }
@@ -192,12 +194,9 @@ class StatisticsFragment : Fragment() {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
         val labelFmt = DateTimeFormatter.ofPattern("MMM", Locale.ENGLISH)
 
-        val parsedDates = transactions.map { LocalDate.parse(it.date, parseFmt) }
-        if (parsedDates.isEmpty()) return
-
-        val startMonth = YearMonth.from(parsedDates.minOrNull()!!)
-        val lastMonth = YearMonth.from(parsedDates.maxOrNull()!!)
-        val endForLabel = lastMonth.plusMonths(1)
+        val nowMonth = YearMonth.now()
+        val startMonth = nowMonth.minusMonths(6)
+        val endForLabel = nowMonth.plusMonths(1)
 
         val months = generateSequence(startMonth) { it.plusMonths(1) }
             .takeWhile { !it.isAfter(endForLabel) }
@@ -220,14 +219,10 @@ class StatisticsFragment : Fragment() {
     private fun drawYearly(transactions: List<Transaction>) {
         val parseFmt = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
-        val parsedDates = transactions.map { LocalDate.parse(it.date, parseFmt) }
-        if (parsedDates.isEmpty()) return
+        val nowYear = LocalDate.now().year
+        val startYear = nowYear - 9
 
-
-        val startYear = parsedDates.minOrNull()!!.year
-        val endYear = parsedDates.maxOrNull()!!.year
-
-        val years = (startYear..endYear + 1).toList()
+        val years = (startYear..nowYear + 1).toList()
 
         val sumsByYear = transactions.groupBy { LocalDate.parse(it.date, parseFmt).year }
             .mapValues { entry -> entry.value.sumOf { it.amount }.toFloat() }
