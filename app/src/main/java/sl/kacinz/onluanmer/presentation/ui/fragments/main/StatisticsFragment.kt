@@ -133,8 +133,6 @@ class StatisticsFragment : Fragment() {
             }
         }
     }
-
-
     private fun updateMetrics(transactions: List<Transaction>) {
         val deposits = transactions.filter { it.amount > 0 }
         val avgTxn = if (deposits.isNotEmpty()) deposits.map { it.amount }.average() else 0.0
@@ -158,6 +156,10 @@ class StatisticsFragment : Fragment() {
     }
 
     private fun updateChart(transactions: List<Transaction>) {
+        if (transactions.isEmpty()) {
+            binding.lineChart.clear()
+            return
+        }
         when (ranges[rangeIndex]) {
             TimeRange.LAST_WEEK -> drawDaily(transactions)
             TimeRange.LAST_MONTH -> drawMonthly(transactions)
@@ -227,8 +229,7 @@ class StatisticsFragment : Fragment() {
         val startYear = parsedDates.minOrNull()!!.year
         val endYear = parsedDates.maxOrNull()!!.year
 
-
-        val years = (startYear..nowYear + 1).toList()
+        val years = (startYear..endYear + 1).toList()
 
         val sumsByYear = transactions.groupBy { LocalDate.parse(it.date, parseFmt).year }
             .mapValues { entry -> entry.value.sumOf { it.amount }.toFloat() }
